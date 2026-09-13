@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房仲 AI 物調表</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,"Noto Sans TC",sans-serif;
+  background:#f5f6f8;
+  color:#333;
+}
+
+.header{
+  background:#ffffff;
+  padding:22px;
+  text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.header h1{
+  margin:0;
+  font-size:28px;
+}
+
+.header p{
+  margin:8px 0 0;
+  color:#888;
+}
+
+.container{
+  max-width:1100px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:25px;
+  margin-bottom:25px;
+  box-shadow:0 3px 12px rgba(0,0,0,.07);
+}
+
+.card h2{
+  margin-top:0;
+  font-size:20px;
+  border-left:5px solid #f07818;
+  padding-left:12px;
+}
+
+.url-box{
+  display:flex;
+  gap:10px;
+}
+
+input,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:15px;
+}
+
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+button{
+  border:0;
+  border-radius:8px;
+  padding:12px 22px;
+  cursor:pointer;
+  font-size:15px;
+}
+
+.primary{
+  background:#f07818;
+  color:white;
+}
+
+.secondary{
+  background:#333;
+  color:white;
+}
+
+.green{
+  background:#248a52;
+  color:white;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
+}
+
+.field label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:bold;
+  color:#666;
+}
+
+.preview{
+  background:white;
+  width:100%;
+  padding:35px;
+}
+
+.preview-title{
+  text-align:center;
+  font-size:26px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+.preview-subtitle{
+  text-align:center;
+  color:#777;
+  margin-bottom:25px;
+}
+
+.price{
+  text-align:center;
+  font-size:34px;
+  font-weight:bold;
+  color:#f07818;
+  margin:15px 0;
+}
+
+.preview-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+.preview-table td{
+  border:1px solid #ddd;
+  padding:12px;
+}
+
+.preview-table td:nth-child(odd){
+  background:#f7f7f7;
+  font-weight:bold;
+  width:14%;
+}
+
+.feature-box{
+  margin-top:25px;
+  line-height:1.8;
+  white-space:pre-line;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:25px;
+}
+
+.notice{
+  background:#fff7ed;
+  border:1px solid #ffd8b0;
+  padding:15px;
+  border-radius:8px;
+  color:#8a4b12;
+  margin-top:15px;
+}
+
+@media(max-width:700px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .url-box{
+    flex-direction:column;
+  }
+
+  .preview{
+    padding:20px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>🏠 房仲 AI 物調表</h1>
+  <p>網址 → 物件資料 → Word / JPG</p>
+</div>
+
+<div class="container">
+
+  <div class="card">
+
+    <h2>① 輸入房屋網址</h2>
+
+    <div class="url-box">
+
+      <input
+        id="propertyUrl"
+        placeholder="請貼上 591、台灣房屋、樂屋等房屋網址"
+        value="https://www.twhg.com.tw/buy/GD02500423"
+      >
+
+      <button class="primary" onclick="loadExample()">
+        讀取物件
+      </button>
+
+    </div>
+
+    <div class="notice">
+      第一版先使用資料編輯模式。下一版會加入「網址自動抓取＋截圖辨識」。
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>② 物件資料</h2>
+
+    <div class="grid">
+
+      <div class="field">
+        <label>物件名稱</label>
+        <input id="title" value="迴龍市場雙面寬大地坪四層樓透店">
+      </div>
+
+      <div class="field">
+        <label>總價</label>
+        <input id="price" value="6,200 萬">
+      </div>
+
+      <div class="field">
+        <label>單價</label>
+        <input id="unitPrice" value="33.5 萬／坪">
+      </div>
+
+      <div class="field">
+        <label>類型</label>
+        <input id="type" value="透天別墅">
+      </div>
+
+      <div class="field">
+        <label>建坪</label>
+        <input id="building" value="185.05 坪">
+      </div>
+
+      <div class="field">
+        <label>土地坪數</label>
+        <input id="land" value="56.75 坪">
+      </div>
+
+      <div class="field">
+        <label>格局</label>
+        <input id="layout" value="16房6廳5.5衛">
+      </div>
+
+      <div class="field">
+        <label>樓層</label>
+        <input id="floor" value="1–4／4樓">
+      </div>
+
+      <div class="field">
+        <label>屋齡</label>
+        <input id="age" value="—">
+      </div>
+
+      <div class="field">
+        <label>車位</label>
+        <input id="parking" value="無車位">
+      </div>
+
+      <div class="field">
+        <label>座向</label>
+        <input id="direction" value="座東南朝西北">
+      </div>
+
+      <div class="field">
+        <label>建材</label>
+        <input id="material" value="小口磚、加強磚造">
+      </div>
+
+      <div class="field">
+        <label>用途</label>
+        <input id="usage" value="住家用">
+      </div>
+
+      <div class="field">
+        <label>地址</label>
+        <input id="address" value="新北市樹林區龍興街">
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>③ 物件特色</h2>
+
+    <textarea id="features">市場旁的房子，生活機能與人流兼具。
+
+四層樓市場型透店，一樓可做生意、工作室或店面使用；雙面寬透店，騎樓未使用狀況下可停放多台車。
+
+大地坪、可運用範圍廣，樓上空間可依需求規劃使用。
+
+保留大供電機可運用，配電箱（大電量／三相電）主體保留完整。
+
+適合生鮮超市、肉品海鮮專賣、餐飲熱炒、烘焙中央廚房等業者。
+
+三鶯線已於2026年6月30日通車，樹林與鶯歌、三峽的軌道交通網絡進一步串聯。</textarea>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>④ 物調表預覽</h2>
+
+    <div id="preview" class="preview">
+
+      <div class="preview-title" id="pTitle"></div>
+
+      <div class="preview-subtitle">
+        房 屋 物 調 表
+      </div>
+
+      <div class="price" id="pPrice"></div>
+
+      <table class="preview-table">
+
+        <tr>
+          <td>單價</td>
+          <td id="pUnitPrice"></td>
+          <td>類型</td>
+          <td id="pType"></td>
+        </tr>
+
+        <tr>
+          <td>建坪</td>
+          <td id="pBuilding"></td>
+          <td>土地</td>
+          <td id="pLand"></td>
+        </tr>
+
+        <tr>
+          <td>格局</td>
+          <td id="pLayout"></td>
+          <td>樓層</td>
+          <td id="pFloor"></td>
+        </tr>
+
+        <tr>
+          <td>屋齡</td>
+          <td id="pAge"></td>
+          <td>車位</td>
+          <td id="pParking"></td>
+        </tr>
+
+        <tr>
+          <td>座向</td>
+          <td id="pDirection"></td>
+          <td>建材</td>
+          <td id="pMaterial"></td>
+        </tr>
+
+        <tr>
+          <td>用途</td>
+          <td id="pUsage"></td>
+          <td>地址</td>
+          <td id="pAddress"></td>
+        </tr>
+
+      </table>
+
+      <div class="feature-box">
+        <h3>物件特色</h3>
+        <div id="pFeatures"></div>
+      </div>
+
+    </div>
+
+
+    <div class="actions">
+
+      <button class="primary" onclick="downloadJPG()">
+        📷 下載 JPG
+      </button>
+
+      <button class="green" onclick="downloadWord()">
+        📄 下載 Word
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+function get(id){
+  return document.getElementById(id).value;
+}
+
+function updatePreview(){
+
+  document.getElementById("pTitle").innerText=get("title");
+  document.getElementById("pPrice").innerText=get("price");
+
+  document.getElementById("pUnitPrice").innerText=get("unitPrice");
+  document.getElementById("pType").innerText=get("type");
+  document.getElementById("pBuilding").innerText=get("building");
+  document.getElementById("pLand").innerText=get("land");
+  document.getElementById("pLayout").innerText=get("layout");
+  document.getElementById("pFloor").innerText=get("floor");
+  document.getElementById("pAge").innerText=get("age");
+  document.getElementById("pParking").innerText=get("parking");
+  document.getElementById("pDirection").innerText=get("direction");
+  document.getElementById("pMaterial").innerText=get("material");
+  document.getElementById("pUsage").innerText=get("usage");
+  document.getElementById("pAddress").innerText=get("address");
+  document.getElementById("pFeatures").innerText=get("features");
+
+}
+
+document.querySelectorAll("input, textarea").forEach(function(el){
+
+  el.addEventListener("input",updatePreview);
+
+});
+
+updatePreview();
+
+
+function loadExample(){
+
+  alert("已載入測試物件資料！");
+
+  updatePreview();
+
+}
+
+
+async function downloadJPG(){
+
+  const element=document.getElementById("preview");
+
+  const canvas=await html2canvas(element,{
+    scale:2,
+    backgroundColor:"#ffffff"
+  });
+
+  const link=document.createElement("a");
+
+  link.download=(get("title") || "房屋物調表")+".jpg";
+
+  link.href=canvas.toDataURL("image/jpeg",0.95);
+
+  link.click();
+
+}
+
+
+function downloadWord(){
+
+  const title=get("title");
+
+  const html=`
+
+  <html>
+
+  <head>
+
+  <meta charset="UTF-8">
+
+  <style>
+
+  body{
+    font-family:Arial,"Microsoft JhengHei",sans-serif;
+    padding:30px;
+  }
+
+  h1{
+    text-align:center;
+  }
+
+  h2{
+    text-align:center;
+  }
+
+  .price{
+    text-align:center;
+    font-size:28px;
+    color:#f07818;
+    font-weight:bold;
+  }
+
+  table{
+    border-collapse:collapse;
+    width:100%;
+    margin-top:20px;
+  }
+
+  td{
+    border:1px solid #999;
+    padding:10px;
+  }
+
+  td:nth-child(odd){
+    font-weight:bold;
+    background:#f5f5f5;
+  }
+
+  </style>
+
+  </head>
+
+  <body>
+
+  <h1>房 屋 物 調 表</h1>
+
+  <h2>${title}</h2>
+
+  <div class="price">${get("price")}</div>
+
+  <table>
+
+  <tr>
+  <td>單價</td><td>${get("unitPrice")}</td>
+  <td>類型</td><td>${get("type")}</td>
+  </tr>
+
+  <tr>
+  <td>建坪</td><td>${get("building")}</td>
+  <td>土地</td><td>${get("land")}</td>
+  </tr>
+
+  <tr>
+  <td>格局</td><td>${get("layout")}</td>
+  <td>樓層</td><td>${get("floor")}</td>
+  </tr>
+
+  <tr>
+  <td>屋齡</td><td>${get("age")}</td>
+  <td>車位</td><td>${get("parking")}</td>
+  </tr>
+
+  <tr>
+  <td>座向</td><td>${get("direction")}</td>
+  <td>建材</td><td>${get("material")}</td>
+  </tr>
+
+  <tr>
+  <td>用途</td><td>${get("usage")}</td>
+  <td>地址</td><td>${get("address")}</td>
+  </tr>
+
+  </table>
+
+  <h2>物件特色</h2>
+
+  <p>${get("features").replace(/\n/g,"<br>")}</p>
+
+  </body>
+
+  </html>
+
+  `;
+
+  const blob=new Blob(
+    ["\ufeff",html],
+    {type:"application/msword"}
+  );
+
+  const link=document.createElement("a");
+
+  link.href=URL.createObjectURL(blob);
+
+  link.download=(title || "房屋物調表")+".doc";
+
+  link.click();
+
+  URL.revokeObjectURL(link.href);
+
+}
+
+</script>
+
+</body>
+</html>
